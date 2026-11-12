@@ -27,6 +27,7 @@ import { addRelatedPrimaryKeyToFields } from '@/utils/add-related-primary-key-to
 import { adjustFieldsForDisplays } from '@/utils/adjust-fields-for-displays';
 import { formatItemsCountPaginated } from '@/utils/format-items-count';
 import { getItemRoute } from '@/utils/get-route';
+import { getVersionUpdateEdits } from '@/utils/get-version-update-edits';
 import { parseFilter } from '@/utils/parse-filter';
 import DrawerBatch from '@/views/private/components/drawer-batch.vue';
 import DrawerCollection from '@/views/private/components/drawer-collection.vue';
@@ -295,7 +296,17 @@ function editItem(item: DisplayItem) {
 	const relatedPkField = relationInfo.value.relatedPrimaryKeyField.field;
 
 	newItem = false;
-	editsAtStart.value = getItemEdits(item);
+
+	editsAtStart.value = version.value
+		? {
+				...getVersionUpdateEdits(
+					value.value && !Array.isArray(value.value) ? value.value.update : undefined,
+					relatedPkField,
+					item[relatedPkField],
+				),
+				...getItemEdits(item),
+			}
+		: getItemEdits(item);
 
 	if (item?.$type === 'created' && !isItemSelected(item)) {
 		currentlyEditing.value = '+';

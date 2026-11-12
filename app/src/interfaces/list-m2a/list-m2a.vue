@@ -25,6 +25,7 @@ import { addRelatedPrimaryKeyToFields } from '@/utils/add-related-primary-key-to
 import { adjustFieldsForDisplays } from '@/utils/adjust-fields-for-displays';
 import { isCollectionInactive } from '@/utils/collection-status';
 import { getM2ACollectionTemplates } from '@/utils/get-m2a-collection-templates';
+import { getVersionUpdateEdits } from '@/utils/get-version-update-edits';
 import { hideDragImage } from '@/utils/hide-drag-image';
 import { renderStringTemplate } from '@/utils/render-string-template';
 import DrawerCollection from '@/views/private/components/drawer-collection.vue';
@@ -206,8 +207,20 @@ function editItem(item: DisplayItem) {
 
 	newItem = false;
 
+	const stagedEdits = getItemEdits(item);
+
+	const versionEdits = version.value
+		? getVersionUpdateEdits(
+				value.value && typeof value.value === 'object' && !Array.isArray(value.value) ? value.value.update : undefined,
+				junctionPkField,
+				get(item, [junctionPkField]),
+				junctionField,
+			)
+		: {};
+
 	editsAtStart.value = {
-		...getItemEdits(item),
+		...stagedEdits,
+		...(isEmpty(versionEdits) ? {} : { [junctionField]: { ...versionEdits, ...stagedEdits[junctionField] } }),
 		[relationInfo.value.collectionField.field]: item[relationInfo.value.collectionField.field],
 	};
 
