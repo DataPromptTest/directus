@@ -209,6 +209,9 @@ function editItem(item: DisplayItem) {
 	editsAtStart.value = {
 		...getItemEdits(item),
 		[relationInfo.value.collectionField.field]: item[relationInfo.value.collectionField.field],
+		// Inside a version the drawer must open with the version's values for this item (the delta),
+		// not the published values it would otherwise load without a version
+		...(version.value ? { [junctionField]: item[junctionField] } : {}),
 	};
 
 	editModalActive.value = true;
