@@ -5,6 +5,7 @@ import { localizedFormat } from '@/utils/localized-format';
 import { localizedFormatDistance } from '@/utils/localized-format-distance';
 import { localizedFormatDistanceStrict } from '@/utils/localized-format-distance-strict';
 import { parseDate } from '@/utils/parse-date';
+import { replaceWeekOfMonth } from '@/utils/replace-week-of-month';
 
 export interface FormatDateOptions {
 	type: 'dateTime' | 'date' | 'time' | 'timestamp';
@@ -71,6 +72,7 @@ export function formatDate(value: string, options: FormatDateOptions) {
 	}
 
 	const date = parseDate(value, options.type);
+	format = replaceWeekOfMonth(format, date);
 
 	if (options.type === 'timestamp' && options.tz?.trim()) {
 		return formatInTimeZone(date, options.tz, format, { locale: getDateFNSLocale() });
