@@ -249,3 +249,15 @@ describe('absolute formatting', () => {
 		expect(result).toBe(expected);
 	});
 });
+
+describe('week of month formatting', () => {
+	test('should format W as the week of month', () => {
+		const value = new Date(2023, 3, 12, 12).toISOString();
+		expect(formatDate(value, { type: 'timestamp', format: "'week' W 'of' MMM" })).toBe('week 3 of Apr');
+	});
+
+	test('should keep quoted W as literal text', () => {
+		const value = new Date(2023, 3, 12, 12).toISOString();
+		expect(formatDate(value, { type: 'timestamp', format: "'W' W" })).toBe('W 3');
+	});
+});
