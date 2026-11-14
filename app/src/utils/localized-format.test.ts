@@ -16,4 +16,21 @@ describe('localizedFormat', () => {
 	test('should keep W inside quoted literals as text', () => {
 		expect(localizedFormat(date, "'W' W")).toBe('W 3');
 	});
+
+	test('should keep escaped quotes inside literals', () => {
+		expect(localizedFormat(date, "'It''s' W")).toBe("It's 3");
+	});
+
+	test('should count weeks from the locale week start', () => {
+		expect(localizedFormat(new Date(2026, 2, 2), 'W', { weekStartsOn: 1 })).toBe('2');
+	});
+
+	test('should render the sixth week when the month starts on a Saturday', () => {
+		expect(localizedFormat(new Date(2026, 7, 31), 'W')).toBe('6');
+	});
+
+	test('should start a new week number on the week start day', () => {
+		expect(localizedFormat(new Date(2026, 2, 7), 'W')).toBe('1');
+		expect(localizedFormat(new Date(2026, 2, 8), 'W')).toBe('2');
+	});
 });

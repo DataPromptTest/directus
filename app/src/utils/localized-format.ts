@@ -1,16 +1,21 @@
-import { format as formatOriginal, startOfMonth, toDate } from 'date-fns';
+import { format as formatOriginal, toDate } from 'date-fns';
 import { getDateFNSLocale } from '@/utils/get-date-fns-locale';
 
 type LocalizedFormat = (...a: Parameters<typeof formatOriginal>) => string;
+
+export function getWeekOfMonth(dayOfMonth: number, dayOfWeek: number, weekStartsOn: number): number {
+	const offset = (dayOfWeek - dayOfMonth + 1) % 7;
+	const firstDayOfMonth = (offset + 7) % 7;
+	const leadingDays = (firstDayOfMonth - weekStartsOn + 7) % 7;
+
+	return Math.ceil((dayOfMonth + leadingDays) / 7);
+}
 
 /**
  * date-fns has no week-of-month token, so the unicode TR35 `W` symbol is replaced with the
  * week number as a quoted literal. Quoted text is left untouched.
  */
-function replaceWeekOfMonth(date: Date, format: string, weekStartsOn: number): string {
-	const leadingDays = (startOfMonth(date).getDay() - weekStartsOn + 7) % 7;
-	const weekOfMonth = Math.ceil((date.getDate() + leadingDays) / 7);
-
+export function replaceWeekOfMonth(format: string, weekOfMonth: number): string {
 	let result = '';
 	let inQuotes = false;
 
@@ -31,7 +36,9 @@ function replaceWeekOfMonth(date: Date, format: string, weekStartsOn: number): s
 export const localizedFormat: LocalizedFormat = (date, format, options): string => {
 	const locale = getDateFNSLocale();
 	const weekStartsOn = options?.weekStartsOn ?? locale?.options?.weekStartsOn ?? 0;
-	const resolvedFormat = replaceWeekOfMonth(toDate(date), format, weekStartsOn);
+	const jsDate = toDate(date);
+	const weekOfMonth = getWeekOfMonth(jsDate.getDate(), jsDate.getDay(), weekStartsOn);
+	const resolvedFormat = replaceWeekOfMonth(format, weekOfMonth);
 
 	return formatOriginal(date, resolvedFormat, {
 		...options,

@@ -1,7 +1,7 @@
 import { formatInTimeZone } from 'date-fns-tz';
 import { i18n } from '@/lang';
 import { getDateFNSLocale } from '@/utils/get-date-fns-locale';
-import { localizedFormat } from '@/utils/localized-format';
+import { getWeekOfMonth, localizedFormat, replaceWeekOfMonth } from '@/utils/localized-format';
 import { localizedFormatDistance } from '@/utils/localized-format-distance';
 import { localizedFormatDistanceStrict } from '@/utils/localized-format-distance-strict';
 import { parseDate } from '@/utils/parse-date';
@@ -73,7 +73,12 @@ export function formatDate(value: string, options: FormatDateOptions) {
 	const date = parseDate(value, options.type);
 
 	if (options.type === 'timestamp' && options.tz?.trim()) {
-		return formatInTimeZone(date, options.tz, format, { locale: getDateFNSLocale() });
+		const tz = options.tz;
+		const dayOfMonth = Number(formatInTimeZone(date, tz, 'd'));
+		const isoDayOfWeek = Number(formatInTimeZone(date, tz, 'i'));
+		const weekStartsOn = getDateFNSLocale()?.options?.weekStartsOn ?? 0;
+		const weekOfMonth = getWeekOfMonth(dayOfMonth, isoDayOfWeek % 7, weekStartsOn);
+		return formatInTimeZone(date, tz, replaceWeekOfMonth(format, weekOfMonth), { locale: getDateFNSLocale() });
 	}
 
 	return localizedFormat(date, format);
