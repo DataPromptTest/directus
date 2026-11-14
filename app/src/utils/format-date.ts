@@ -1,3 +1,4 @@
+import { differenceInCalendarDays, startOfMonth, startOfWeek } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { i18n } from '@/lang';
 import { getDateFNSLocale } from '@/utils/get-date-fns-locale';
@@ -18,6 +19,28 @@ export interface FormatDateOptions {
 	use24?: boolean;
 	/** IANA timezone identifier (e.g., 'America/New_York', 'Europe/London', 'UTC'). If not provided, uses local timezone. */
 	tz?: string;
+}
+
+/**
+ * date-fns does not support the TR35 week-of-month symbol `W`, so it is replaced with the week number of the month before formatting.
+ */
+function replaceWeekOfMonth(date: Date, format: string): string {
+	const locale = getDateFNSLocale();
+	const daysFromFirstWeek = differenceInCalendarDays(
+		startOfWeek(date, { locale }),
+		startOfWeek(startOfMonth(date), { locale }),
+	);
+	const weekOfMonth = Math.floor(daysFromFirstWeek / 7) + 1;
+
+	let result = '';
+	let quoted = false;
+
+	for (const char of format) {
+		if (char === "'") quoted = !quoted;
+		result += !quoted && char === 'W' ? String(weekOfMonth) : char;
+	}
+
+	return result;
 }
 
 /**
@@ -71,12 +94,13 @@ export function formatDate(value: string, options: FormatDateOptions) {
 	}
 
 	const date = parseDate(value, options.type);
+	const resolvedFormat = replaceWeekOfMonth(date, format);
 
 	if (options.type === 'timestamp' && options.tz?.trim()) {
-		return formatInTimeZone(date, options.tz, format, { locale: getDateFNSLocale() });
+		return formatInTimeZone(date, options.tz, resolvedFormat, { locale: getDateFNSLocale() });
 	}
 
-	return localizedFormat(date, format);
+	return localizedFormat(date, resolvedFormat);
 }
 
 /**
