@@ -249,3 +249,34 @@ describe('absolute formatting', () => {
 		expect(result).toBe(expected);
 	});
 });
+
+describe('week of month formatting', () => {
+	const weekTestCases: { value: Date; format: string; expected: string }[] = [
+		{
+			value: new Date(2023, 3, 16, 12),
+			format: "'week' W 'of' MMM",
+			expected: 'week 4 of Apr',
+		},
+		{
+			value: new Date(2023, 3, 1, 12),
+			format: "'week' W 'of' MMM",
+			expected: 'week 1 of Apr',
+		},
+		{
+			value: new Date(2023, 3, 9, 12),
+			format: "'week' W 'of' MMM",
+			expected: 'week 3 of Apr',
+		},
+		{
+			value: new Date(2023, 0, 1, 12),
+			format: "'week' w 'of' Y",
+			expected: 'week 1 of 2023',
+		},
+	];
+
+	test.each(weekTestCases)('should display $expected for $format', ({ value, format, expected }) => {
+		const result = formatDate(value.toISOString(), { type: 'timestamp', format });
+
+		expect(result).toBe(expected);
+	});
+});
