@@ -6,6 +6,24 @@ import { localizedFormatDistance } from '@/utils/localized-format-distance';
 import { localizedFormatDistanceStrict } from '@/utils/localized-format-distance-strict';
 import { parseDate } from '@/utils/parse-date';
 
+function getWeekOfMonth(date: Date): number {
+	const weekStartsOn = getDateFNSLocale().options?.weekStartsOn ?? 0;
+	const firstOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+	const leadingDays = (firstOfMonth.getDay() - weekStartsOn + 7) % 7;
+	return Math.ceil((date.getDate() + leadingDays) / 7);
+}
+
+/** date-fns rejects the unquoted TR35 week-of-month symbol W, so it is replaced with the week number */
+function escapeWeekOfMonth(format: string, date: Date): string {
+	let result = '';
+	let inQuote = false;
+	for (const char of format) {
+		if (char === "'") inQuote = !inQuote;
+		result += char === 'W' && !inQuote ? `'${getWeekOfMonth(date)}'` : char;
+	}
+	return result;
+}
+
 export interface FormatDateOptions {
 	type: 'dateTime' | 'date' | 'time' | 'timestamp';
 	/** 'short', 'long' or custom (https://www.unicode.org/reports/tr35/tr35-dates.html#Date_Field_Symbol_Table) */
@@ -71,12 +89,13 @@ export function formatDate(value: string, options: FormatDateOptions) {
 	}
 
 	const date = parseDate(value, options.type);
+	const resolvedFormat = escapeWeekOfMonth(String(format), date);
 
 	if (options.type === 'timestamp' && options.tz?.trim()) {
-		return formatInTimeZone(date, options.tz, format, { locale: getDateFNSLocale() });
+		return formatInTimeZone(date, options.tz, resolvedFormat, { locale: getDateFNSLocale() });
 	}
 
-	return localizedFormat(date, format);
+	return localizedFormat(date, resolvedFormat);
 }
 
 /**
