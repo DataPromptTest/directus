@@ -78,6 +78,17 @@ describe('relative formatting', () => {
 	});
 });
 
+describe('week of month formatting', () => {
+	test.each([
+		{ value: '2023-01-01', format: "'week' W 'of' MMM", expected: 'week 1 of Jan' },
+		{ value: '2023-04-12', format: "'week' W 'of' MMM", expected: 'week 3 of Apr' },
+		{ value: '2023-04-30', format: "'week' W 'of' MMM", expected: 'week 6 of Apr' },
+		{ value: '2023-04-12', format: "'W' W", expected: 'W 3' },
+	])('should format W as the week of the month for $format', ({ value, format, expected }) => {
+		expect(formatDate(value, { type: 'date', format })).toBe(expected);
+	});
+});
+
 describe('absolute formatting', () => {
 	const absoluteTestCases: { options: FormatDateOptions; expected: string }[] = [
 		{
