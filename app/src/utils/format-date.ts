@@ -1,3 +1,4 @@
+import { getWeekOfMonth } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { i18n } from '@/lang';
 import { getDateFNSLocale } from '@/utils/get-date-fns-locale';
@@ -5,6 +6,18 @@ import { localizedFormat } from '@/utils/localized-format';
 import { localizedFormatDistance } from '@/utils/localized-format-distance';
 import { localizedFormatDistanceStrict } from '@/utils/localized-format-distance-strict';
 import { parseDate } from '@/utils/parse-date';
+
+/**
+ * date-fns format() throws on the unescaped TR35 week-of-month symbol W, so it is replaced by the escaped week number
+ */
+function replaceWeekOfMonth(format: string, date: Date): string {
+	const weekOfMonth = String(getWeekOfMonth(date, { locale: getDateFNSLocale() }));
+
+	return format
+		.split(/('(?:[^']|'')*')/)
+		.map((part, index) => (index % 2 === 0 ? part.replace(/W/g, `'${weekOfMonth}'`) : part))
+		.join('');
+}
 
 export interface FormatDateOptions {
 	type: 'dateTime' | 'date' | 'time' | 'timestamp';
@@ -73,10 +86,10 @@ export function formatDate(value: string, options: FormatDateOptions) {
 	const date = parseDate(value, options.type);
 
 	if (options.type === 'timestamp' && options.tz?.trim()) {
-		return formatInTimeZone(date, options.tz, format, { locale: getDateFNSLocale() });
+		return formatInTimeZone(date, options.tz, replaceWeekOfMonth(format, date), { locale: getDateFNSLocale() });
 	}
 
-	return localizedFormat(date, format);
+	return localizedFormat(date, replaceWeekOfMonth(format, date));
 }
 
 /**
