@@ -78,6 +78,16 @@ describe('relative formatting', () => {
 	});
 });
 
+describe('week symbols', () => {
+	test('should format the week of month with the W symbol', () => {
+		expect(formatDate('2026-04-12T12:00:00', { type: 'dateTime', format: "'week' W 'of' MMM" })).toBe('week 3 of Apr');
+	});
+
+	test('should keep formatting the week of year with the w symbol', () => {
+		expect(formatDate('2026-04-12T12:00:00', { type: 'dateTime', format: "'week' w 'of' Y" })).toBe('week 16 of 2026');
+	});
+});
+
 describe('absolute formatting', () => {
 	const absoluteTestCases: { options: FormatDateOptions; expected: string }[] = [
 		{
