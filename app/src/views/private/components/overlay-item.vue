@@ -4,7 +4,7 @@ import { isSystemCollection } from '@directus/system-data';
 import { ContentVersion, Field, PrimaryKey, Relation } from '@directus/types';
 import { getEndpoint } from '@directus/utils';
 import { useElementSize } from '@vueuse/core';
-import { isEmpty, set, uniqBy } from 'lodash-es';
+import { cloneDeep, isEmpty, mergeWith, omitBy, set, uniqBy } from 'lodash-es';
 import { computed, type Ref, ref, toRefs, unref, useTemplateRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -64,6 +64,9 @@ export interface OverlayItemProps {
 	preventCancelWithEdits?: boolean;
 	// Only use when editing a version directly (e.g. visual editor). Not for regular item editing.
 	version?: ContentVersion['key'] | null | undefined;
+	// The parent is a content version: its saved delta for this item is passed in `edits`, and must
+	// also be applied to the loaded values (or be the only source for items that exist in the delta only).
+	mergeEditsIntoInitialValues?: boolean;
 }
 
 export interface OverlayItemEmits {
@@ -343,6 +346,11 @@ function useItem() {
 				if (props.primaryKey !== '+') fetchItem();
 				if (props.relatedPrimaryKey !== '+') fetchRelatedItem();
 				internalEdits.value = props.edits ?? {};
+
+				if (props.primaryKey === '+' && props.relatedPrimaryKey === '+') {
+					const staged = getStagedEdits();
+					if (staged) initialValues.value = staged;
+				}
 			} else {
 				loading.value = false;
 				initialValues.value = null;
@@ -373,6 +381,21 @@ function useItem() {
 		return `${baseEndpoint}/${encodeURIComponent(primaryKey)}`;
 	}
 
+	function getStagedEdits(): Record<string, any> | null {
+		if (!props.mergeEditsIntoInitialValues || isEmpty(props.edits)) return null;
+
+		return omitBy(cloneDeep(props.edits), (_value, key) => key.startsWith('$'));
+	}
+
+	function withStagedEdits(loaded: Record<string, any>, staged: unknown) {
+		if (!staged || typeof staged !== 'object' || Array.isArray(staged)) return loaded;
+
+		// An array on either side is a complete value for that field, not something to merge index by index
+		return mergeWith(cloneDeep(loaded), cloneDeep(staged), (target, source) =>
+			Array.isArray(target) || Array.isArray(source) ? source : undefined,
+		);
+	}
+
 	async function fetchItem() {
 		if (!props.primaryKey) return;
 
@@ -396,7 +419,7 @@ function useItem() {
 
 			const response = await api.get(endpoint, { params });
 
-			initialValues.value = response.data.data;
+			initialValues.value = withStagedEdits(response.data.data, getStagedEdits());
 		} catch (error) {
 			internalActive.value = false;
 			unexpectedError(error);
@@ -418,7 +441,10 @@ function useItem() {
 
 			initialValues.value = {
 				...(initialValues.value || {}),
-				[junctionFieldInfo.value.field]: response.data.data,
+				[junctionFieldInfo.value.field]: withStagedEdits(
+					response.data.data,
+					getStagedEdits()?.[junctionFieldInfo.value.field],
+				),
 			};
 		} catch (error) {
 			internalActive.value = false;
