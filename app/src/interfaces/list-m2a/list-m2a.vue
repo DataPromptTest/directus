@@ -528,6 +528,7 @@ const menuActive = computed(
 			:related-primary-key="relatedPrimaryKey || '+'"
 			:junction-field="relationInfo.junctionField.field"
 			:edits="editsAtStart"
+			:merge-edits-into-initial-values="!!version"
 			:circular-field="relationInfo.reverseJunctionField.field"
 			@input="stageEdits"
 		/>
