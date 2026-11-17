@@ -33,6 +33,7 @@ import { useTemplateData } from '@/composables/use-template-data';
 import { useFieldsStore } from '@/stores/fields';
 import { useNotificationsStore } from '@/stores/notifications';
 import { useRelationsStore } from '@/stores/relations';
+import { applyVersionDelta } from '@/utils/apply-version-delta';
 import { clearHiddenFieldsByCondition } from '@/utils/clear-hidden-fields-by-condition';
 import { getDefaultValuesFromFields } from '@/utils/get-default-values-from-fields';
 import { mergeItemData } from '@/utils/merge-item-data';
@@ -64,6 +65,8 @@ export interface OverlayItemProps {
 	preventCancelWithEdits?: boolean;
 	// Only use when editing a version directly (e.g. visual editor). Not for regular item editing.
 	version?: ContentVersion['key'] | null | undefined;
+	// The edits are the item's entry in the delta of the parent's version, which the directly fetched item lacks
+	editsFromVersion?: boolean;
 }
 
 export interface OverlayItemEmits {
@@ -396,7 +399,9 @@ function useItem() {
 
 			const response = await api.get(endpoint, { params });
 
-			initialValues.value = response.data.data;
+			initialValues.value = props.editsFromVersion
+				? applyVersionDelta(response.data.data, props.edits, props.junctionField)
+				: response.data.data;
 		} catch (error) {
 			internalActive.value = false;
 			unexpectedError(error);
@@ -418,7 +423,9 @@ function useItem() {
 
 			initialValues.value = {
 				...(initialValues.value || {}),
-				[junctionFieldInfo.value.field]: response.data.data,
+				[junctionFieldInfo.value.field]: props.editsFromVersion
+					? applyVersionDelta(response.data.data, props.edits?.[junctionFieldInfo.value.field])
+					: response.data.data,
 			};
 		} catch (error) {
 			internalActive.value = false;
