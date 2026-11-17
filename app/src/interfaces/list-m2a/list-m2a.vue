@@ -211,8 +211,11 @@ function editItem(item: DisplayItem) {
 		version: version.value,
 		item,
 		itemEdits: getItemEdits(item),
+		value: value.value,
 		collectionField: relationInfo.value.collectionField.field,
 		junctionField,
+		junctionPrimaryKeyField: junctionPkField,
+		relationPrimaryKeyField: relationPkField,
 	});
 
 	editModalActive.value = true;
