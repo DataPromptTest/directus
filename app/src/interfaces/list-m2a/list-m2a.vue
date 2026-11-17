@@ -5,6 +5,7 @@ import { clamp, get, isEmpty, isNil, set } from 'lodash-es';
 import { computed, ref, toRefs, unref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import Draggable from 'vuedraggable';
+import { getDrawerEdits } from './get-drawer-edits';
 import VButton from '@/components/v-button.vue';
 import VIcon from '@/components/v-icon/v-icon.vue';
 import VListItemIcon from '@/components/v-list-item-icon.vue';
@@ -206,10 +207,13 @@ function editItem(item: DisplayItem) {
 
 	newItem = false;
 
-	editsAtStart.value = {
-		...getItemEdits(item),
-		[relationInfo.value.collectionField.field]: item[relationInfo.value.collectionField.field],
-	};
+	editsAtStart.value = getDrawerEdits({
+		version: version.value,
+		item,
+		itemEdits: getItemEdits(item),
+		collectionField: relationInfo.value.collectionField.field,
+		junctionField,
+	});
 
 	editModalActive.value = true;
 	editingCollection.value = item[relationInfo.value.collectionField.field];
