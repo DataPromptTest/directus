@@ -1,11 +1,12 @@
 import { createTestingPinia } from '@pinia/testing';
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { computed, ref } from 'vue';
 import OverlayItem from './overlay-item.vue';
 import { ClickOutside } from '@/__utils__/click-outside';
 import { Tooltip } from '@/__utils__/tooltip';
 import type { GlobalMountOptions } from '@/__utils__/types';
+import api from '@/api';
 import { i18n } from '@/lang';
 
 const mockCollabConnected = ref<boolean | undefined>(false);
@@ -223,5 +224,35 @@ describe('popoverProps callback', () => {
 
 		expect(popoverProps).toHaveBeenCalled();
 		expect(popoverProps.mock.calls[0]![0]).toEqual({ popoverWidth: expect.any(Number) });
+	});
+});
+
+describe('item created in a content version', () => {
+	it('opens with the values of the parent delta when the item does not exist in the database', async () => {
+		vi.mocked(api.get).mockRejectedValue({ response: { status: 403 } });
+
+		const wrapper = mount(OverlayItem, {
+			props: {
+				collection: 'articles',
+				active: true,
+				primaryKey: '1',
+				edits: { title: 'Created title' },
+				editsFromVersion: true,
+			},
+			global: {
+				...global,
+				stubs: {
+					...globalStubs.stubs,
+					OverlayItemContent: {
+						props: ['initialValues'],
+						template: '<div data-testid="form">{{ initialValues?.title }}</div>',
+					},
+				},
+			},
+		});
+
+		await flushPromises();
+
+		expect(wrapper.find('[data-testid="form"]').text()).toBe('Created title');
 	});
 });
