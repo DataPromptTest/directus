@@ -25,6 +25,7 @@ import { addRelatedPrimaryKeyToFields } from '@/utils/add-related-primary-key-to
 import { adjustFieldsForDisplays } from '@/utils/adjust-fields-for-displays';
 import { isCollectionInactive } from '@/utils/collection-status';
 import { getM2ACollectionTemplates } from '@/utils/get-m2a-collection-templates';
+import { getVersionDeltaEdits } from '@/utils/get-version-delta-edits';
 import { hideDragImage } from '@/utils/hide-drag-image';
 import { renderStringTemplate } from '@/utils/render-string-template';
 import DrawerCollection from '@/views/private/components/drawer-collection.vue';
@@ -206,8 +207,14 @@ function editItem(item: DisplayItem) {
 
 	newItem = false;
 
+	const itemEdits = getItemEdits(item);
+
+	// Once a version is saved, its changes only live in the version's delta. The drawer loads the item
+	// from its own collection, so without the delta it would show the published values.
 	editsAtStart.value = {
-		...getItemEdits(item),
+		...(isEmpty(itemEdits)
+			? getVersionDeltaEdits(version.value, field.value, junctionPkField, item[junctionPkField])
+			: itemEdits),
 		[relationInfo.value.collectionField.field]: item[relationInfo.value.collectionField.field],
 	};
 
