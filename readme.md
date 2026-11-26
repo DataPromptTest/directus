@@ -107,3 +107,4 @@ the [Open Innovation Grant](https://directus.com/oig).
 license. [See pricing](https://directus.com/pricing) for details.
 
 <!-- PR verification test 2026-11-26 -->
+<!-- second commit: re-verify -->
